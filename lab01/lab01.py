@@ -61,7 +61,13 @@ def test2():
 # EXERCISE 3
 #################################################################################
 def integer_right_triangles(p):
-    pass
+    triangles = 0
+    for a in range (1,p):
+        for b in range (a, p):
+            for c in range (b+1, p):
+                if ((a**2 + b**2 == c**2) and (a+b+c == p)):
+                    triangles = triangles + 1
+    return triangles
 
 def test3():
     tc = unittest.TestCase()
