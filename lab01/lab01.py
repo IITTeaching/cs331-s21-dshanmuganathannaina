@@ -1,3 +1,4 @@
+import math
 import unittest
 import sys
 from contextlib import contextmanager
@@ -62,14 +63,15 @@ def test2():
 #################################################################################
 def integer_right_triangles(p):
     triangles = 0
+    maxLength = p // 2
     if (p % 2 == 1):
         return 0
     else:
-        for a in range (1,p):
-            for b in range (a, p):
-                for c in range (b+1, p):
-                    if ((a**2 + b**2 == c**2) and (a+b+c == p)):
-                        triangles = triangles + 1
+        for a in range (1,maxLength):
+            for b in range (a, maxLength):
+                c = math.sqrt(a**2 + b**2)
+                if (a+b+c == p):
+                    triangles = triangles + 1
     return triangles
 
 def test3():
