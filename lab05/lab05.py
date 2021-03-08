@@ -42,18 +42,41 @@ class LinkedList:
         """Implements `x = self[idx]`"""
         assert(isinstance(idx, int))
         ### BEGIN SOLUTION
+        nidx = self._normalize_idx(idx)
+        if nidx >= self.length:
+          raise IndexError('The index is out of bounds')
+        nhead = self.head
+        for i in range(nidx + 1):
+          nhead = nhead.next
+        return nhead.val
         ### END SOLUTION
 
     def __setitem__(self, idx, value):
         """Implements `self[idx] = x`"""
         assert(isinstance(idx, int))
         ### BEGIN SOLUTION
+        nidx = self._normalize_idx(idx)
+        if nidx >= self.length:
+          raise IndexError('The index is out of bounds')
+        nhead = self.head
+        for i in range(nidx + 1):
+          nhead = nhead.next
+        nhead.val = value
         ### END SOLUTION
 
     def __delitem__(self, idx):
         """Implements `del self[idx]`"""
         assert(isinstance(idx, int))
         ### BEGIN SOLUTION
+        nidx = self._normalize_idx(idx)
+        if nidx >= self.length or self.length == 0:
+          raise IndexError('The index is out of bounds')
+        nhead = self.head
+        for i in range(nidx + 1):
+          nhead = nhead.next
+        nhead.prior.next = nhead.next
+        nhead.next.prior = nhead.prior
+        self.length -= 1
         ### END SOLUTION
 
     ### cursor-based access ###
@@ -62,11 +85,18 @@ class LinkedList:
         """retrieves the value at the current cursor position"""
         assert self.cursor is not self.head
         ### BEGIN SOLUTION
+        return self.cursor.val
         ### END SOLUTION
 
     def cursor_set(self, idx):
         """sets the cursor to the node at the provided index"""
         ### BEGIN SOLUTION
+        nidx = self._normalize_idx(idx)
+        if nidx > self.length:
+          raise IndexError('The index is out of bounds')
+        self.cursor = self.head
+        for i in range(nidx + 1):
+          self.cursor = self.cursor.next
         ### END SOLUTION
 
     def cursor_move(self, offset):
@@ -77,12 +107,26 @@ class LinkedList:
         node as needed"""
         assert len(self) > 0
         ### BEGIN SOLUTION
+        if offset < 0:
+          for _ in range(abs(offset)):
+            self.cursor = self.cursor.prior
+            if self.cursor == self.head:
+              self.cursor = self.cursor.prior
+        else:
+          for _ in range(offset):
+            self.cursor = self.cursor.next
+            if self.cursor == self.head:
+              self.cursor = self.cursor.next
         ### END SOLUTION
 
     def cursor_insert(self, value):
         """inserts a new value after the cursor and sets the cursor to the
         new node"""
         ### BEGIN SOLUTION
+        newNode = LinkedList.Node(value, prior = self.cursor, next = self.cursor.next)
+        newNode.prior.next = newNode.next.prior = newNode
+        self.cursor = newNode
+        self.length += 1
         ### END SOLUTION
 
     def cursor_delete(self):
@@ -90,6 +134,10 @@ class LinkedList:
         following node"""
         assert self.cursor is not self.head and len(self) > 0
         ### BEGIN SOLUTION
+        self.cursor.prior.next = self.cursor.next
+        self.cursor.next.prior = self.cursor.prior
+        self.cursor = self.cursor.next
+        self.length -= 1
         ### END SOLUTION
 
     ### stringification ###
@@ -100,11 +148,19 @@ class LinkedList:
         and enclosed by square brackets. E.g., for a list containing values
         1, 2 and 3, returns '[1, 2, 3]'."""
         ### BEGIN SOLUTION
+        returnString = ''
+        pointer = self.head.next
+        for i in range (self.length):
+          newString = str(pointer.val)
+          returnString = returnString + newString + ', '
+          pointer = pointer.next
+        return '[' + returnString[:-2] + ']'
         ### END SOLUTION
 
     def __repr__(self):
         """Supports REPL inspection. (Same behavior as `str`.)"""
         ### BEGIN SOLUTION
+        return str(self)
         ### END SOLUTION
 
     ### single-element manipulation ###
@@ -114,18 +170,38 @@ class LinkedList:
         list, as needed. Note that inserting a value at len(self) --- equivalent
         to appending the value --- is permitted. Raises IndexError if idx is invalid."""
         ### BEGIN SOLUTION
+        if idx > self.length or idx < 0:
+          raise IndexError('Invalid Index')
+        pointer = self.head
+        for _ in range(idx):
+          pointer = pointer.next
+        newNode = LinkedList.Node(value, prior=pointer, next=pointer.next)
+        newNode.prior.next = newNode.next.prior = newNode
+        self.length += 1
         ### END SOLUTION
 
     def pop(self, idx=-1):
         """Deletes and returns the element at idx (which is the last element,
         by default)."""
         ### BEGIN SOLUTION
+        temp = self[idx]
+        del self[idx]
+        return temp
         ### END SOLUTION
 
     def remove(self, value):
         """Removes the first (closest to the front) instance of value from the
         list. Raises a ValueError if value is not found in the list."""
         ### BEGIN SOLUTION
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          if pointer.val == value:
+            pointer.prior.next = pointer.next
+            pointer.next.prior = pointer.prior
+            self.length -= 1
+            return
+        raise ValueError('Value is not found in list')
         ### END SOLUTION
 
     ### predicates (T/F queries) ###
@@ -134,11 +210,27 @@ class LinkedList:
         """Returns True if this LinkedList contains the same elements (in order) as
         other. If other is not an LinkedList, returns False."""
         ### BEGIN SOLUTION
+        result = True
+        if (type(self) != type(other)):
+          result = False
+        if (self.length != len(other)):
+          result = False
+        for i in range(self.length):
+          if self[i] != other[i]:
+            result = False
+        return result
         ### END SOLUTION
 
     def __contains__(self, value):
         """Implements `val in self`. Returns true if value is found in this list."""
         ### BEGIN SOLUTION
+        result = False
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          if pointer.val == value:
+            result = True
+        return result
         ### END SOLUTION
 
     ### queries ###
@@ -150,11 +242,25 @@ class LinkedList:
     def min(self):
         """Returns the minimum value in this list."""
         ### BEGIN SOLUTION
+        pointer = self.head.next
+        minimum = pointer.val
+        for _ in range(self.length-1):
+          pointer = pointer.next
+          if pointer.val < minimum:
+            minimum = pointer.val
+        return minimum
         ### END SOLUTION
 
     def max(self):
         """Returns the maximum value in this list."""
         ### BEGIN SOLUTION
+        pointer = self.head.next
+        maximum = pointer.val
+        for _ in range(self.length-1):
+          pointer = pointer.next
+          if pointer.val > maximum:
+            maximum = pointer.val
+        return maximum
         ### END SOLUTION
 
     def index(self, value, i=0, j=None):
@@ -163,11 +269,35 @@ class LinkedList:
         specified, search through the end of the list for value. If value
         is not in the list, raise a ValueError."""
         ### BEGIN SOLUTION
+        nidx = self._normalize_idx(i)
+        if j and j < self.length:
+          jnidx = self._normalize_idx(j) 
+        else:
+          jnidx = self.length
+
+        if nidx > jnidx:
+          raise IndexError('index is invalid')
+        
+        pointer = self.head.next
+        for _ in range(nidx):
+          pointer = pointer.next
+        for i in range(nidx, jnidx):
+          if pointer.val == value:
+            return i
+          pointer = pointer.next
+        raise ValueError('value is not in the list')
         ### END SOLUTION
 
     def count(self, value):
         """Returns the number of times value appears in this list."""
         ### BEGIN SOLUTION
+        count = 0
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          if pointer.val == value:
+            count += 1
+        return count
         ### END SOLUTION
 
     ### bulk operations ###
@@ -178,37 +308,64 @@ class LinkedList:
         of other."""
         assert(isinstance(other, LinkedList))
         ### BEGIN SOLUTION
+        returnList = LinkedList()
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          returnList.append(pointer.val)
+        for i in range(len(other)):
+          returnList.append(other[i])
+        return returnList
         ### END SOLUTION
 
     def clear(self):
         """Removes all elements from this list."""
         ### BEGIN SOLUTION
+        self.head.next = self.head.prior = self.head
+        self.length = 0
         ### END SOLUTION
 
     def copy(self):
         """Returns a new LinkedList instance (with separate Nodes), that
         contains the same values as this list."""
         ### BEGIN SOLUTION
+        returnList = LinkedList()
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          returnList.append(pointer.val)
+        return returnList
         ### END SOLUTION
 
     def extend(self, other):
         """Adds all elements, in order, from other --- an Iterable --- to this list."""
         ### BEGIN SOLUTION
+        for i in range(len(other)):
+          self.append(other[i])
         ### END SOLUTION
 
     ### iteration ###
     def __iter__(self):
         """Supports iteration (via `iter(self)`)"""
         ### BEGIN SOLUTION
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.next
+          yield pointer.val
         ### END SOLUTION
 
     ### reverse ###
     def reverse(self):
         """Return a copy of the list with all elements in reverse order.
-
         E.g., for [1,2,3] you shoudl return [3,2,1].
         """
         ### BEGIN SOLUTION
+        returnList = LinkedList()
+        pointer = self.head
+        for _ in range(self.length):
+          pointer = pointer.prior
+          returnList.append(pointer.val)
+        return returnList
         ### END SOLUTION
 
 
